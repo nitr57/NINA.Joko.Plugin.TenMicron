@@ -45,22 +45,32 @@
     <Antlr4 Include="Grammars\Angle.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>NINA.Joko.Plugin.TenMicron.Grammars</CustomToolNamespace>
+      <JavaExec Condition="'$(JavaPath)' != ''">$(JavaPath)</JavaExec>
+      <JavaExec Condition="'$(JavaPath)' == ''">java</JavaExec>
     </Antlr4>
     <Antlr4 Include="Grammars\Time.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>NINA.Joko.Plugin.TenMicron.Grammars</CustomToolNamespace>
+      <JavaExec Condition="'$(JavaPath)' != ''">$(JavaPath)</JavaExec>
+      <JavaExec Condition="'$(JavaPath)' == ''">java</JavaExec>
     </Antlr4>
     <Antlr4 Include="Grammars\AlignmentStarInfo.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>NINA.Joko.Plugin.TenMicron.Grammars</CustomToolNamespace>
+      <JavaExec Condition="'$(JavaPath)' != ''">$(JavaPath)</JavaExec>
+      <JavaExec Condition="'$(JavaPath)' == ''">java</JavaExec>
     </Antlr4>
     <Antlr4 Include="Grammars\AlignmentModelInfo.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>NINA.Joko.Plugin.TenMicron.Grammars</CustomToolNamespace>
+      <JavaExec Condition="'$(JavaPath)' != ''">$(JavaPath)</JavaExec>
+      <JavaExec Condition="'$(JavaPath)' == ''">java</JavaExec>
     </Antlr4>
     <Antlr4 Include="Grammars\MountDateTime.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>NINA.Joko.Plugin.TenMicron.Grammars</CustomToolNamespace>
+      <JavaExec Condition="'$(JavaPath)' != ''">$(JavaPath)</JavaExec>
+      <JavaExec Condition="'$(JavaPath)' == ''">java</JavaExec>
     </Antlr4>
   </ItemGroup>
   <ItemGroup>
