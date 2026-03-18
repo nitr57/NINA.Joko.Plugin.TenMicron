@@ -23,4 +23,12 @@ namespace NINA.Joko.Plugin.TenMicron.Utility {
             throw new ParseCancellationException($"line {line}:{charPositionInLine} {msg}");
         }
     }
+
+    public class ThrowingLexerErrorListener : IAntlrErrorListener<int> {
+        public static readonly ThrowingLexerErrorListener INSTANCE = new ThrowingLexerErrorListener();
+
+        public void SyntaxError(TextWriter output, IRecognizer recognizer, int offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e) {
+            throw new ParseCancellationException($"line {line}:{charPositionInLine} {msg}");
+        }
+    }
 }

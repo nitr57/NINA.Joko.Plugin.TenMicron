@@ -89,11 +89,16 @@ namespace NINA.Joko.Plugin.TenMicron.Equipment {
                                 Status = $"Getting Alignment Star {i} / {alignmentStarCount}",
                                 ProgressType = ApplicationStatus.StatusProgressType.ValueOfMaxValue
                             });
-                        alignmentStars.Add(mountModelMediator.GetAlignmentStarInfo(i));
+                        try {
+                            alignmentStars.Add(mountModelMediator.GetAlignmentStarInfo(i));
+                        } catch (Exception ex) {
+                            Logger.Warning($"Failed to get alignment star {i}, skipping: {ex.Message}");
+                        }
                         ct.ThrowIfCancellationRequested();
                     }
 
                     alignmentModel.OriginalAlignmentStars = alignmentStars.ToImmutable();
+                    alignmentModel.AlignmentStarCount = alignmentStars.Count;
                     alignmentModel.SynchronizePoints();
                 }
             } catch (Exception) {

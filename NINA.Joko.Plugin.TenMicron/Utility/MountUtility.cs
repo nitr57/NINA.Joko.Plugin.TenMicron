@@ -71,21 +71,24 @@ namespace NINA.Joko.Plugin.TenMicron.Utility {
         }
 
         public static MountAscomConfig GetMountAscomConfig(string driverId) {
-            var registered = ASCOM.Com.Profile.IsRegistered(ASCOM.Common.DeviceTypes.Telescope, driverId);
-            if (registered) {
-                ;
-                var profileJson = JsonConvert.SerializeObject(ASCOM.Com.Profile.GetValues(ASCOM.Common.DeviceTypes.Telescope, driverId));
-                Logger.Info($"10u ASCOM driver configuration: {profileJson}");
+            try {
+                var registered = ASCOM.Com.Profile.IsRegistered(ASCOM.Common.DeviceTypes.Telescope, driverId);
+                if (registered) {
+                    var profileJson = JsonConvert.SerializeObject(ASCOM.Com.Profile.GetValues(ASCOM.Common.DeviceTypes.Telescope, driverId));
+                    Logger.Info($"10u ASCOM driver configuration: {profileJson}");
 
-                if (driverId == "ASCOM.tenmicron_mount.Telescope") {
-                    return new MountAscomConfig() {
-                        EnableUncheckedRawCommands = GetASCOMProfileBool(driverId, "enable_unchecked_raw_commands", "mount_settings", true),
-                        UseJ2000Coordinates = GetASCOMProfileBool(driverId, "use_J2000_coords", "mount_settings", false),
-                        EnableSync = GetASCOMProfileBool(driverId, "enable_sync", "mount_settings", false),
-                        UseSyncAsAlignment = GetASCOMProfileBool(driverId, "use_sync_as_alignment", "mount_settings", false),
-                        RefractionUpdateFile = GetASCOMProfileString(driverId, "refraction_update_file", "mount_settings", "")
-                    };
+                    if (driverId == "ASCOM.tenmicron_mount.Telescope") {
+                        return new MountAscomConfig() {
+                            EnableUncheckedRawCommands = GetASCOMProfileBool(driverId, "enable_unchecked_raw_commands", "mount_settings", true),
+                            UseJ2000Coordinates = GetASCOMProfileBool(driverId, "use_J2000_coords", "mount_settings", false),
+                            EnableSync = GetASCOMProfileBool(driverId, "enable_sync", "mount_settings", false),
+                            UseSyncAsAlignment = GetASCOMProfileBool(driverId, "use_sync_as_alignment", "mount_settings", false),
+                            RefractionUpdateFile = GetASCOMProfileString(driverId, "refraction_update_file", "mount_settings", "")
+                        };
+                    }
                 }
+            } catch (Exception e) {
+                Logger.Info($"ASCOM profile not available (likely INDI connection), skipping ASCOM config: {e.Message}");
             }
             return null;
         }

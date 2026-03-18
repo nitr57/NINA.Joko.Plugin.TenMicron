@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <UseWPF>true</UseWPF>
-    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+    <UseWPF Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))">true</UseWPF>
+    <ImportWindowsDesktopTargets Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))">true</ImportWindowsDesktopTargets>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <DefaultItemExcludes Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))">$(DefaultItemExcludes);**/*.xaml.cs;**/*.xaml</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
     <Compile Update="Grammars\AlignmentModelInfo.g4.lexer.cs">
@@ -66,25 +67,36 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ASCOM.Exception.Library" Version="6.6.1" />
-    <PackageReference Include="ASCOM.Tools" Version="1.0.108" />
+    <PackageReference Include="ASCOM.Exception.Library" Version="7.0.1" />
+    <PackageReference Include="ASCOM.Tools" Version="3.0.0" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
     <PackageReference Include="Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers" Version="0.4.355802">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.8" />
+    <PackageReference Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" Include="Microsoft.Windows.Compatibility" Version="8.0.8" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.11.1" />
     <PackageReference Include="Antlr4BuildTasks" Version="12.1.0" PrivateAssets="all" />
-    <PackageReference Include="Dirkster.AvalonDock" Version="4.60.0" />
-    <PackageReference Include="NINA.Plugin" Version="3.1.2.9001" />
+    <PackageReference Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))" Include="Dirkster.AvalonDock" Version="4.60.0" />
+    <PackageReference Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))"  Include="NINA.Plugin" Version="3.2.0.2001-beta" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+  </ItemGroup>
+  <ItemGroup Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))">
+    <ProjectReference Include="..\..\..\NINA.Plugin\NINA.Plugin.csproj" />
+    <ProjectReference Include="..\..\..\System.Windows.Compat\System.Windows.Compat.csproj" />
+    <PackageReference Include="System.Drawing.Common" Version="*" ExcludeAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <Page Remove="Properties\DesignTimeResources.xaml" />
   </ItemGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="!$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))">
     <Exec Command="echo TargetDir: $(TargetDir)&#xD;&#xA;      if not exist &quot;%25localappdata%25\NINA\Plugins&quot; (&#xD;&#xA;      echo &quot;Creating $(PlatformName) Plugins folder&quot;&#xD;&#xA;      mkdir  &quot;%25localappdata%25\NINA\Plugins&quot;&#xD;&#xA;      mkdir  &quot;%25localappdata%25\NINA\Plugins\3.0.0&quot;&#xD;&#xA;      )&#xD;&#xA;&#xD;&#xA;      if not exist &quot;%25localappdata%25\NINA\Plugin\10 Micron Tools&quot; (&#xD;&#xA;      echo &quot;Creating $(PlatformName) Plugins 10 Micron Tools folder&quot;&#xD;&#xA;      mkdir  &quot;%25localappdata%25\NINA\Plugins\3.0.0\10 Micron Tools&quot;&#xD;&#xA;      )&#xD;&#xA;&#xD;&#xA;      echo &quot;Copying $(PlatformName) $(TargetFileName)&quot;&#xD;&#xA;      xcopy &quot;$(TargetPath)&quot; &quot;%25localappdata%25\NINA\Plugins\3.0.0\10 Micron Tools&quot; /h/k/r/y&#xD;&#xA;      xcopy &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;%25localappdata%25\NINA\Plugins\3.0.0\10 Micron Tools&quot; /h/k/r/y&#xD;&#xA;&#xD;&#xA;      echo &quot;Copying $(PlatformName) $(TargetFileName) Dependencies&quot;&#xD;&#xA;      xcopy &quot;$(TargetDir)Antlr4.Runtime.Standard.dll&quot; &quot;%25localappdata%25\NINA\Plugins\3.0.0\10 Micron Tools&quot; /h/k/r/y" />
+  </Target>
+  <Target Name="PostBuildLinux" AfterTargets="PostBuildEvent" Condition="$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))">
+    <Exec Command="mkdir -p $HOME/.local/share/NINA/Plugins/3.0.0/TenMicron" />
+    <Exec Command="cp $(TargetPath) $HOME/.local/share/NINA/Plugins/3.0.0/TenMicron/" />
+    <Exec Command="cp $(TargetDir)Antlr4BuildTasks.dll $HOME/.local/share/NINA/Plugins/3.0.0/TenMicron/" />
+    <Exec Command="cp $(TargetDir)Antlr4.Runtime.Standard.dll $HOME/.local/share/NINA/Plugins/3.0.0/TenMicron/" />
   </Target>
 </Project>

@@ -11,7 +11,6 @@
 #endregion "copyright"
 
 using NINA.Joko.Plugin.TenMicron.Utility;
-using NINA.Joko.Plugin.TenMicron.View;
 using NINA.Core.Utility;
 using System;
 using System.Collections.Generic;
@@ -97,6 +96,7 @@ namespace NINA.Joko.Plugin.TenMicron.ViewModels {
 
         public static MyInputBoxResult Show(string caption, string promptText, string promptTooltip) {
             var result = Application.Current.Dispatcher.Invoke(() => {
+                /*
                 var inputBox = new MyInputBox();
                 inputBox.Title = caption;
                 inputBox.PromptText = promptText;
@@ -131,6 +131,8 @@ namespace NINA.Joko.Plugin.TenMicron.ViewModels {
                 } else {
                     return new MyInputBoxResult(MessageBoxResult.Cancel);
                 }
+                */
+                return new MyInputBoxResult(MessageBoxResult.Cancel);
             });
             return result;
         }

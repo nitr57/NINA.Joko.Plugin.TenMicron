@@ -138,6 +138,8 @@ namespace NINA.Joko.Plugin.TenMicron.Equipment {
             where P : Parser {
             var inputStream = new AntlrInputStream(s);
             var lexer = LexerCreator<L>.Construct(inputStream);
+            lexer.RemoveErrorListeners();
+            lexer.AddErrorListener(ThrowingLexerErrorListener.INSTANCE);
             var commonTokenStream = new CommonTokenStream(lexer);
             var parser = ParserCreator<P>.Construct(commonTokenStream);
             parser.RemoveErrorListeners();

@@ -27,7 +27,7 @@ using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
 namespace NINA.Joko.Plugin.TenMicron.ModelManagement {
 
     public class ModelPointGenerator : IModelPointGenerator {
-        public const int MAX_POINTS = 100;
+        public const int MAX_POINTS = 99;
 
         // Epsilon to optimize average nearest neighbor distance
         private const double EPSILON = 0.36d;
@@ -166,8 +166,8 @@ namespace NINA.Joko.Plugin.TenMicron.ModelManagement {
             var latitude = Angle.ByDegree(profileService.ActiveProfile.AstrometrySettings.Latitude);
             var longitude = Angle.ByDegree(profileService.ActiveProfile.AstrometrySettings.Longitude);
             var topocentric = new TopocentricCoordinates(
-                azimuth: Angle.ByDegree(altitudeDegrees),
-                altitude: Angle.ByDegree(azimuthDegrees),
+                azimuth: Angle.ByDegree(azimuthDegrees),
+                altitude: Angle.ByDegree(altitudeDegrees),
                 latitude: latitude,
                 longitude: longitude,
                 dateTime: new ConstantDateTime(time));
