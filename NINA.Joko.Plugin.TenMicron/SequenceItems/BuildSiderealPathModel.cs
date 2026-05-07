@@ -349,10 +349,14 @@ namespace NINA.Joko.Plugin.TenMicron.SequenceItems {
 
         private void UpdateStartTime() {
             if (SelectedSiderealPathStartDateTimeProvider != null) {
-                var t = SelectedSiderealPathStartDateTimeProvider.GetDateTime(this) + TimeSpan.FromMinutes(SiderealTrackStartOffsetMinutes);
-                StartHours = t.Hour;
-                StartMinutes = t.Minute;
-                StartSeconds = t.Second;
+                try {
+                    var t = SelectedSiderealPathStartDateTimeProvider.GetDateTime(this) + TimeSpan.FromMinutes(SiderealTrackStartOffsetMinutes);
+                    StartHours = t.Hour;
+                    StartMinutes = t.Minute;
+                    StartSeconds = t.Second;
+                } catch (TimeProviderException) {
+                    // Time is unavailable at the current location/date (e.g. no nautical dusk during polar summer)
+                }
             }
 
             UpdateModelPoints();
@@ -360,10 +364,14 @@ namespace NINA.Joko.Plugin.TenMicron.SequenceItems {
 
         private void UpdateEndTime() {
             if (SelectedSiderealPathEndDateTimeProvider != null) {
-                var t = SelectedSiderealPathEndDateTimeProvider.GetDateTime(this) + TimeSpan.FromMinutes(SiderealTrackEndOffsetMinutes);
-                EndHours = t.Hour;
-                EndMinutes = t.Minute;
-                EndSeconds = t.Second;
+                try {
+                    var t = SelectedSiderealPathEndDateTimeProvider.GetDateTime(this) + TimeSpan.FromMinutes(SiderealTrackEndOffsetMinutes);
+                    EndHours = t.Hour;
+                    EndMinutes = t.Minute;
+                    EndSeconds = t.Second;
+                } catch (TimeProviderException) {
+                    // Time is unavailable at the current location/date (e.g. no nautical dawn during polar summer)
+                }
             }
 
             UpdateModelPoints();
