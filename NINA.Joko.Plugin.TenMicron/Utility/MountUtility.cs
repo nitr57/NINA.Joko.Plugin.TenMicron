@@ -56,16 +56,20 @@ namespace NINA.Joko.Plugin.TenMicron.Utility {
             GetMountAscomConfig(driverId, new AscomProfileAccessor());
 
         internal static MountAscomConfig GetMountAscomConfig(string driverId, IAscomProfileAccessor accessor) {
+            // The ASCOM Profile is only meaningful for the ASCOM 10micron driver. Bail out before
+            // touching the accessor for any other driver (e.g. INDI/Alpaca) so we don't require the
+            // ASCOM Platform to be installed - it is not available on Linux, and calling into it
+            // there throws "The ASCOM Platform is not installed on this device".
+            if (driverId != "ASCOM.tenmicron_mount.Telescope") {
+                return null;
+            }
+
             if (!accessor.IsRegistered(driverId)) {
                 return null;
             }
 
             var profileJson = JsonConvert.SerializeObject(accessor.GetValues(driverId));
             Logger.Info($"10u ASCOM driver configuration: {profileJson}");
-
-            if (driverId != "ASCOM.tenmicron_mount.Telescope") {
-                return null;
-            }
 
             return new MountAscomConfig() {
                 EnableUncheckedRawCommands = TryGetBool(accessor, driverId, "enable_unchecked_raw_commands", "mount_settings", true),
