@@ -318,7 +318,9 @@ namespace NINA.Joko.Plugin.TenMicron.ViewModels {
                             }
                         } catch (OperationCanceledException) {
                         } catch (Exception ex) {
-                            Notification.ShowError("Failed to get 10u alignment model");
+                            if (!ct.IsCancellationRequested) {
+                                Notification.ShowError("Failed to get 10u alignment model");
+                            }
                             Logger.Error("Failed to get alignment model", ex);
                         }
                     }, ct);
