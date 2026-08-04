@@ -78,7 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ASCOM.Exception.Library" Version="7.0.1" />
-    <PackageReference Include="ASCOM.Tools" Version="3.0.0" />
+    <PackageReference Include="ASCOM.Tools" Version="3.1.0" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
     <PackageReference Include="Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers" Version="0.4.355802">
       <PrivateAssets>all</PrivateAssets>
