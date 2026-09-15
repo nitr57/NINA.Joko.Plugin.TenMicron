@@ -352,9 +352,19 @@ namespace NINA.Joko.Plugin.TenMicron.ViewModels {
                 }
             }
 
-            await loadTask;
-            lock (alignmentModelLoadLock) {
-                this.alignmentModelLoadTask = null;
+            // The field has to be cleared even when the await throws. Task.Run with an already
+            // cancelled token hands back a Canceled task without ever running the body, so a
+            // caller that passes a cancelled disconnectCts would otherwise leave a dead task
+            // parked here forever - every later call then short-circuits onto it, rethrows, and
+            // the alignment model can never load again for the rest of the session.
+            try {
+                await loadTask;
+            } finally {
+                lock (alignmentModelLoadLock) {
+                    if (ReferenceEquals(this.alignmentModelLoadTask, loadTask)) {
+                        this.alignmentModelLoadTask = null;
+                    }
+                }
             }
         }
 
