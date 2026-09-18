@@ -69,6 +69,8 @@ namespace NINA.Joko.Plugin.TenMicron.Interfaces {
 
         Response<int> GetMeridianSlewLimitDegrees();
 
+        Response<int> GetHorizonLimitLowDegrees();
+
         Response<decimal> GetSlewSettleTimeSeconds();
 
         Response<bool> SetSlewSettleTime(decimal seconds);

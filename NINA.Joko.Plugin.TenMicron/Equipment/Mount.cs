@@ -514,6 +514,17 @@ namespace NINA.Joko.Plugin.TenMicron.Equipment {
             return new Response<int>(result, rawResponse);
         }
 
+        public Response<int> GetHorizonLimitLowDegrees() {
+            // The lowest altitude the mount slews to (set with :So, -5 to +45 degrees). On 10micron this is :Go#,
+            // as in MountWizzard4; the Meade LX200 naming used by INDI's lx200driver.h calls :Go# the upper limit.
+            const string command = ":Go#";
+
+            // Returns the signed limit in degrees followed by #, e.g. +05#
+            var rawResponse = this.mountCommander.SendCommandString(command, true);
+            var result = int.Parse(rawResponse.TrimEnd('#'), CultureInfo.InvariantCulture);
+            return new Response<int>(result, rawResponse);
+        }
+
         public Response<bool> SetMeridianSlewLimit(int degrees) {
             string command = $":Slms{degrees:00}#";
 

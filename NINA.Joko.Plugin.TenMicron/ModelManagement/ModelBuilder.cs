@@ -248,7 +248,7 @@ namespace NINA.Joko.Plugin.TenMicron.ModelManagement {
                 if (startedAtPark) {
                     Notification.ShowInformation("Re-parking telescope after 10u model build");
                     await telescopeMediator.ParkTelescope(stepProgress, innerCts.Token);
-                } else if (startCoordinates != null) {
+                } else if (startCoordinates != null && CanRestoreStartPosition(startCoordinates)) {
                     Notification.ShowInformation("Restoring telescope position after 10u model build");
                     await telescopeMediator.SlewToCoordinatesAsync(startCoordinates, innerCts.Token);
                 }
@@ -582,6 +582,51 @@ namespace NINA.Joko.Plugin.TenMicron.ModelManagement {
                     }
                     ++state.PriorSuccessfulPointsProcessed;
                 }
+            }
+        }
+
+        // Distance kept above the mount's horizon limit. The altitude computed here is geometric, while near the
+        // horizon the apparent one the mount may judge by is higher; skipping a return that would have worked
+        // costs nothing, trying one that is refused does.
+        private const double StartPositionLimitMarginDegrees = 1.0;
+
+        /// <summary>
+        /// Whether the telescope can be sent back to where the build started. A build started from a low rest
+        /// position, typically the park position right after a manual unpark, would otherwise end with a goto
+        /// below the mount's horizon limit. The mount refuses it, and that refusal is not harmless: over a TCP
+        /// connection the INDI LX200 driver leaves the mount's error text unread (it relies on tcflush, which does
+        /// nothing on a socket), so every later command reads the previous reply until the mount is reconnected.
+        /// Never throws: it runs in the build's finally block, where the filter and dome still have to be restored.
+        /// </summary>
+        private bool CanRestoreStartPosition(Coordinates startCoordinates) {
+            try {
+                var telescopeInfo = telescopeMediator.GetInfo();
+                var altitude = startCoordinates.Transform(
+                    Angle.ByDegree(telescopeInfo.SiteLatitude),
+                    Angle.ByDegree(telescopeInfo.SiteLongitude),
+                    telescopeInfo.SiteElevation).Altitude.Degree;
+
+                double horizonLimit = 0.0;
+                try {
+                    var response = mount.GetHorizonLimitLowDegrees() ?? throw new InvalidOperationException("no response");
+                    horizonLimit = response.Value;
+                } catch (Exception e) {
+                    Logger.Warning($"Could not read the mount's horizon limit ({e.Message}), assuming 0°");
+                }
+
+                if (double.IsNaN(altitude) || altitude < horizonLimit + StartPositionLimitMarginDegrees) {
+                    var message = $"Not restoring the telescope position after the 10u model build: the start position is at {altitude:0.0}° altitude, " +
+                                  $"below the mount's horizon limit of {horizonLimit:0}° (+{StartPositionLimitMarginDegrees:0}° margin), so the mount would refuse the goto";
+                    Logger.Warning(message);
+                    Notification.ShowWarning(message);
+                    return false;
+                }
+
+                Logger.Info($"Restoring the start position at {altitude:0.0}° altitude (mount horizon limit {horizonLimit:0}°)");
+                return true;
+            } catch (Exception e) {
+                Logger.Error($"Could not check whether the start position can be restored, leaving the telescope where it is: {e.Message}");
+                return false;
             }
         }
 

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
+using NINA.Astrometry;
 using NINA.Equipment.Equipment.MyCamera;
 using NINA.Equipment.Equipment.MyDome;
 using NINA.Equipment.Equipment.MyFilterWheel;
@@ -168,6 +169,69 @@ namespace NINA.Joko.Plugin.TenMicron.Tests.ModelManagement {
             (await act.Should().ThrowAsync<InvalidOperationException>()).WithMessage("alignment delete failed");
             env.Mount.Verify(m => m.SetRefractionCorrection(false), Times.Once);
             env.Mount.Verify(m => m.SetRefractionCorrection(true), Times.Once);
+        }
+        // Site matching MockModelBuilderEnvironment's profile.
+        private const double SiteLatitude = 40.0;
+        private const double SiteLongitude = -74.0;
+        private const double SiteElevation = 100.0;
+
+        // A start position that sits at the given altitude right now. The builder recomputes the altitude
+        // moments later; the sky moves far less than the half degree the test cases keep from each threshold.
+        private static Coordinates StartPositionAtAltitude(double altitudeDegrees) {
+            return new TopocentricCoordinates(
+                Angle.ByDegree(180.0), Angle.ByDegree(altitudeDegrees),
+                Angle.ByDegree(SiteLatitude), Angle.ByDegree(SiteLongitude), SiteElevation).Transform(Epoch.JNOW);
+        }
+
+        private static void StartUnparkedAt(MockModelBuilderEnvironment env, Coordinates start) {
+            env.Telescope.Setup(t => t.GetInfo()).Returns(new TelescopeInfo {
+                Connected = true,
+                AtPark = false,
+                Coordinates = start,
+                SiteLatitude = SiteLatitude,
+                SiteLongitude = SiteLongitude,
+                SiteElevation = SiteElevation
+            });
+            env.Telescope.Setup(t => t.SlewToCoordinatesAsync(It.IsAny<Coordinates>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+        }
+
+        // The mount refuses a goto below its horizon limit, and the INDI LX200 driver loses sync with the mount
+        // over TCP after such a refusal, so the return to a low start position must be skipped, not attempted.
+        [TestCase(-0.07, 5, false)] // park position right after a manual unpark
+        [TestCase(2.4, 5, false)]   // low rest position, above the geometric horizon but below the limit
+        [TestCase(5.5, 5, false)]   // above the limit, inside the one-degree margin
+        [TestCase(7.0, 5, true)]
+        [TestCase(30.0, 5, true)]
+        public async Task Build_RestoresStartPositionOnlyAboveMountHorizonLimit(double startAltitude, int horizonLimit, bool restored) {
+            NinaAssetGate.RequireNinaDatabase();
+
+            var env = new MockModelBuilderEnvironment();
+            var start = StartPositionAtAltitude(startAltitude);
+            StartUnparkedAt(env, start);
+            env.Mount.Setup(m => m.GetHorizonLimitLowDegrees()).Returns(new Response<int>(horizonLimit, $"{horizonLimit:+00;-00}#"));
+            var (ct, stopToken) = PreCancelledStopToken();
+            var sut = env.Build();
+
+            await sut.Build(new List<ModelPoint>(), new ModelBuilderOptions(), ct, stopToken);
+
+            env.Telescope.Verify(t => t.SlewToCoordinatesAsync(start, It.IsAny<CancellationToken>()), restored ? Times.Once() : Times.Never());
+        }
+
+        [TestCase(0.5, false)] // below the geometric horizon plus margin
+        [TestCase(3.0, true)]  // an unreadable limit must not block every return
+        public async Task Build_UnreadableHorizonLimit_FallsBackToTheGeometricHorizon(double startAltitude, bool restored) {
+            NinaAssetGate.RequireNinaDatabase();
+
+            var env = new MockModelBuilderEnvironment();
+            var start = StartPositionAtAltitude(startAltitude);
+            StartUnparkedAt(env, start);
+            env.Mount.Setup(m => m.GetHorizonLimitLowDegrees()).Throws(new InvalidOperationException("no reply"));
+            var (ct, stopToken) = PreCancelledStopToken();
+            var sut = env.Build();
+
+            await sut.Build(new List<ModelPoint>(), new ModelBuilderOptions(), ct, stopToken);
+
+            env.Telescope.Verify(t => t.SlewToCoordinatesAsync(start, It.IsAny<CancellationToken>()), restored ? Times.Once() : Times.Never());
         }
     }
 }
