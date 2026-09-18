@@ -38,5 +38,9 @@ namespace NINA.Joko.Plugin.TenMicron.Equipment {
             }
             return result;
         }
+
+        public string SendCommandBatch(string commands) {
+            return null;
+        }
     }
 }

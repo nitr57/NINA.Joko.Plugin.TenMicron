@@ -49,6 +49,10 @@ namespace NINA.Joko.Plugin.TenMicron.Equipment {
             return handler.GetAlignmentStarInfo(alignmentStarIndex);
         }
 
+        public Response<AlignmentStarInfo>[] GetAlignmentStarInfos(int alignmentStarCount) {
+            return handler.GetAlignmentStarInfos(alignmentStarCount);
+        }
+
         public int GetModelCount() {
             return handler.GetModelCount();
         }

@@ -19,5 +19,9 @@ namespace NINA.Joko.Plugin.TenMicron.Interfaces {
         bool SendCommandBool(string command, bool raw);
 
         void SendCommandBlind(string command, bool raw);
+
+        // Sends several '#'-terminated commands in one write and returns all replies concatenated.
+        // Returns null when the connection cannot batch commands.
+        string SendCommandBatch(string commands);
     }
 }

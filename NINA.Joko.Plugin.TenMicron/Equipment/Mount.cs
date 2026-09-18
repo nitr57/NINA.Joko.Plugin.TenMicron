@@ -344,6 +344,41 @@ namespace NINA.Joko.Plugin.TenMicron.Equipment {
             return MountResponseParser.ParseAlignmentStarInfo(rawResponse);
         }
 
+        public Response<AlignmentStarInfo>[] GetAlignmentStarInfos(int alignmentStarCount) {
+            if (alignmentStarCount < 1) {
+                throw new ArgumentException("alignmentStarCount must be >= 1", "alignmentStarCount");
+            }
+            var command = new StringBuilder();
+            for (int i = 1; i <= alignmentStarCount; ++i) {
+                command.Append($":getali{i}#");
+            }
+
+            // One write for all stars and one reply per star.
+            // Null when the connection can't batch, so callers fall back to single reads.
+            var rawResponse = this.mountCommander.SendCommandBatch(command.ToString());
+            if (rawResponse == null) {
+                return null;
+            }
+
+            var replies = rawResponse.Split('#');
+            if (replies.Length != alignmentStarCount + 1 || replies[alignmentStarCount].Length != 0) {
+                throw new Exception($"Expected {alignmentStarCount} alignment star replies, got {rawResponse}");
+            }
+
+            // A star that can't be parsed (e.g. "E#" for an index the mount doesn't have) keeps its
+            // raw reply with a null value, so the other stars keep their positions.
+            var result = new Response<AlignmentStarInfo>[alignmentStarCount];
+            for (int i = 0; i < alignmentStarCount; ++i) {
+                var reply = replies[i] + "#";
+                try {
+                    result[i] = MountResponseParser.ParseAlignmentStarInfo(reply);
+                } catch (Exception) {
+                    result[i] = new Response<AlignmentStarInfo>(null, reply);
+                }
+            }
+            return result;
+        }
+
         public Response<AlignmentModelInfo> GetAlignmentModelInfo() {
             const string command = ":getain#";
 

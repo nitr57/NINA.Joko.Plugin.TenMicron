@@ -250,6 +250,59 @@ namespace NINA.Joko.Plugin.TenMicron.Tests.Equipment {
             act.Should().Throw<ArgumentException>();
         }
 
+        [Test]
+        public void GetAlignmentStarInfos_SendsAllStarsInOneBatch_AndParsesEachReply() {
+            commander.Setup(c => c.SendCommandBatch(":getali1#:getali2#"))
+                .Returns("12:34:56.78,+45*30:15.5,12.3#01:02:03.04,-10*20:30.4,45.6#");
+
+            var result = sut.GetAlignmentStarInfos(2);
+
+            result.Should().HaveCount(2);
+            result[0].Value.LocalHour.Hours.Should().Be(12);
+            result[0].Value.ErrorArcseconds.Should().Be(12.3m);
+            result[1].Value.LocalHour.Hours.Should().Be(1);
+            result[1].Value.ErrorArcseconds.Should().Be(45.6m);
+        }
+
+        [Test]
+        public void GetAlignmentStarInfos_UnparseableReply_KeepsPositionWithNullValue() {
+            commander.Setup(c => c.SendCommandBatch(":getali1#:getali2#:getali3#"))
+                .Returns("12:34:56.78,+45*30:15.5,12.3#E#01:02:03.04,-10*20:30.4,45.6#");
+
+            var result = sut.GetAlignmentStarInfos(3);
+
+            result.Should().HaveCount(3);
+            result[0].Value.ErrorArcseconds.Should().Be(12.3m);
+            result[1].Value.Should().BeNull();
+            result[1].RawResponse.Should().Be("E#");
+            result[2].Value.ErrorArcseconds.Should().Be(45.6m);
+        }
+
+        [Test]
+        public void GetAlignmentStarInfos_BatchNotSupported_ReturnsNull() {
+            commander.Setup(c => c.SendCommandBatch(It.IsAny<string>())).Returns((string)null);
+
+            sut.GetAlignmentStarInfos(2).Should().BeNull();
+        }
+
+        [TestCase("12:34:56.78,+45*30:15.5,12.3#")]
+        [TestCase("12:34:56.78,+45*30:15.5,12.3#E#E#")]
+        [TestCase("12:34:56.78,+45*30:15.5,12.3#E")]
+        public void GetAlignmentStarInfos_ReplyCountMismatch_Throws(string response) {
+            commander.Setup(c => c.SendCommandBatch(":getali1#:getali2#")).Returns(response);
+
+            Action act = () => sut.GetAlignmentStarInfos(2);
+
+            act.Should().Throw<Exception>().WithMessage("*Expected 2 alignment star replies*");
+        }
+
+        [Test]
+        public void GetAlignmentStarInfos_CountBelowOne_ThrowsArgumentException() {
+            Action act = () => sut.GetAlignmentStarInfos(0);
+
+            act.Should().Throw<ArgumentException>();
+        }
+
         // ---------- Bool methods through SendCommandBool / SendCommandString ----------
 
         [TestCase("1#", true)]

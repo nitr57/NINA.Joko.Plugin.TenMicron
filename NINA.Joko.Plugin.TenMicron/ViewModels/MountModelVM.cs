@@ -612,6 +612,13 @@ namespace NINA.Joko.Plugin.TenMicron.ViewModels {
             return null;
         }
 
+        public Response<AlignmentStarInfo>[] GetAlignmentStarInfos(int alignmentStarCount) {
+            if (Connected) {
+                return mount.GetAlignmentStarInfos(alignmentStarCount);
+            }
+            return null;
+        }
+
         public AlignmentModelInfo GetAlignmentModelInfo() {
             if (Connected) {
                 return mount.GetAlignmentModelInfo();

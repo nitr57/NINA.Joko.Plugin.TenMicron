@@ -81,20 +81,39 @@ namespace NINA.Joko.Plugin.TenMicron.Equipment {
                     ct.ThrowIfCancellationRequested();
 
                     var alignmentStars = ImmutableList.CreateBuilder<AlignmentStarInfo>();
-                    for (int i = 1; i <= alignmentStarCount; ++i) {
-                        progress?.Report(
-                            new ApplicationStatus {
-                                MaxProgress = alignmentStarCount,
-                                Progress = i,
-                                Status = $"Getting Alignment Star {i} / {alignmentStarCount}",
-                                ProgressType = ApplicationStatus.StatusProgressType.ValueOfMaxValue
-                            });
-                        try {
-                            alignmentStars.Add(mountModelMediator.GetAlignmentStarInfo(i));
-                        } catch (Exception ex) {
-                            Logger.Warning($"Failed to get alignment star {i}, skipping: {ex.Message}");
+                    progress?.Report(new ApplicationStatus() { Status = $"Getting {alignmentStarCount} Alignment Stars" });
+                    Response<AlignmentStarInfo>[] batchedStars = null;
+                    try {
+                        batchedStars = mountModelMediator.GetAlignmentStarInfos(alignmentStarCount);
+                    } catch (Exception ex) {
+                        Logger.Warning($"Failed to get alignment stars in one batch, reading them one by one: {ex.Message}");
+                    }
+                    ct.ThrowIfCancellationRequested();
+
+                    if (batchedStars != null) {
+                        for (int i = 0; i < batchedStars.Length; ++i) {
+                            if (batchedStars[i].Value != null) {
+                                alignmentStars.Add(batchedStars[i].Value);
+                            } else {
+                                Logger.Warning($"Failed to get alignment star {i + 1}, skipping: mount replied {batchedStars[i].RawResponse}");
+                            }
                         }
-                        ct.ThrowIfCancellationRequested();
+                    } else {
+                        for (int i = 1; i <= alignmentStarCount; ++i) {
+                            progress?.Report(
+                                new ApplicationStatus {
+                                    MaxProgress = alignmentStarCount,
+                                    Progress = i,
+                                    Status = $"Getting Alignment Star {i} / {alignmentStarCount}",
+                                    ProgressType = ApplicationStatus.StatusProgressType.ValueOfMaxValue
+                                });
+                            try {
+                                alignmentStars.Add(mountModelMediator.GetAlignmentStarInfo(i));
+                            } catch (Exception ex) {
+                                Logger.Warning($"Failed to get alignment star {i}, skipping: {ex.Message}");
+                            }
+                            ct.ThrowIfCancellationRequested();
+                        }
                     }
 
                     alignmentModel.OriginalAlignmentStars = alignmentStars.ToImmutable();

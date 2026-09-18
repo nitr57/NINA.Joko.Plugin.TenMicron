@@ -43,6 +43,8 @@ namespace NINA.Joko.Plugin.TenMicron.Interfaces {
 
         Response<AlignmentStarInfo> GetAlignmentStarInfo(int alignmentStarIndex);
 
+        Response<AlignmentStarInfo>[] GetAlignmentStarInfos(int alignmentStarCount);
+
         Response<AlignmentModelInfo> GetAlignmentModelInfo();
 
         Response<bool> StartNewAlignmentSpec();

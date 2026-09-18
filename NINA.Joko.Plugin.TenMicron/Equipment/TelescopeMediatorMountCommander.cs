@@ -14,6 +14,7 @@ using NINA.Joko.Plugin.TenMicron.Exceptions;
 using NINA.Joko.Plugin.TenMicron.Interfaces;
 using NINA.Equipment.Interfaces.Mediator;
 using NINA.Core.Utility;
+using System;
 using System.Threading;
 
 namespace NINA.Joko.Plugin.TenMicron.Equipment {
@@ -63,6 +64,25 @@ namespace NINA.Joko.Plugin.TenMicron.Equipment {
             }
             if (options.LogCommands) {
                 Logger.Info($"{commandId} - Command response: {result}");
+            }
+            return result;
+        }
+
+        public string SendCommandBatch(string commands) {
+            var commandId = Interlocked.Increment(ref commandNumber);
+            if (options.LogCommands) {
+                Logger.Info($"{commandId} - Sending command batch: {commands}");
+            }
+
+            string result;
+            try {
+                // Implemented by the pins INDI devices; drivers without it throw NotImplementedException
+                result = telescopeMediator.Action("rawCommandBatch", commands);
+            } catch (NotImplementedException) {
+                result = null;
+            }
+            if (options.LogCommands) {
+                Logger.Info(result == null ? $"{commandId} - Command batch not supported" : $"{commandId} - Command batch response: {result}");
             }
             return result;
         }
